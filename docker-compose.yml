@@ -33,5 +33,3 @@ services:
         condition: service_healthy
 volumes:
   mysql_data:
-
-  
