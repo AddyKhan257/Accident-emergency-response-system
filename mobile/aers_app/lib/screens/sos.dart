@@ -31,8 +31,8 @@ class _SosScreenState extends State<SosScreen> {
   String _name(dynamic v) {
     if (v is Map) {
       final n = v['name'] ?? '-';
-      final d = v['distance_km'];
-      return d == null ? '$n' : '$n ($d km)';
+      final d = double.tryParse(v['distance_km'].toString());
+      return d == null ? '$n' : '$n (${d.toStringAsFixed(1)} km)';
     }
     return v?.toString() ?? '-';
   }
@@ -117,7 +117,8 @@ class _SosScreenState extends State<SosScreen> {
             ListTile(
                 leading: const Icon(Icons.info_outline),
                 title: const Text('Status'),
-                subtitle: Text('${r['status'] ?? 'pending'}  |  ID ${r['accident_id'] ?? '-'}')),
+                subtitle: Text(
+                    '${r['status'] ?? 'pending'}  |  ID ${r['accident_id'] ?? '-'}')),
           ]),
         ),
         const Spacer(),
