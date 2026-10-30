@@ -51,6 +51,16 @@ class Api {
     }
   }
 
+  /// "City Hospital (0.7 km)" from a {name, distance_km} map.
+  static String place(dynamic v) {
+    if (v is Map) {
+      final n = v['name'] ?? '-';
+      final d = double.tryParse(v['distance_km'].toString());
+      return d == null ? '$n' : '$n (${d.toStringAsFixed(1)} km)';
+    }
+    return v?.toString() ?? '-';
+  }
+
   /// Returns null on success, or an error text.
   static Future<String?> login(String email, String password) async {
     try {
@@ -110,6 +120,58 @@ class Api {
         .post(Uri.parse('$baseUrl/api/sos'),
             headers: _headers(),
             body: jsonEncode({'lat': loc.lat, 'lng': loc.lng}))
+        .timeout(const Duration(seconds: 20));
+    if (r.statusCode != 200 && r.statusCode != 201) {
+      throw Exception(_err(r));
+    }
+    return Map<String, dynamic>.from(jsonDecode(r.body));
+  }
+
+  /// POST /api/accidents : creates the accident, finds nearest hospital/police.
+  static Future<Map<String, dynamic>> reportAccident({
+    required String accidentType,
+    required String vehicleNo,
+    required int peopleCount,
+    required String description,
+  }) async {
+    final loc = await getLocation();
+    final r = await http
+        .post(Uri.parse('$baseUrl/api/accidents'),
+            headers: _headers(),
+            body: jsonEncode({
+              'lat': loc.lat,
+              'lng': loc.lng,
+              'accident_type': accidentType,
+              'vehicle_no': vehicleNo,
+              'people_count': peopleCount,
+              'description': description,
+            }))
+        .timeout(const Duration(seconds: 20));
+    if (r.statusCode != 200 && r.statusCode != 201) {
+      throw Exception(_err(r));
+    }
+    return Map<String, dynamic>.from(jsonDecode(r.body));
+  }
+
+  /// POST /api/predict : ML severity. accidentId saves the result in the DB.
+  static Future<Map<String, dynamic>> predict({
+    required String vehicleType,
+    required int peopleCount,
+    required double speed,
+    required double impactG,
+    dynamic accidentId,
+  }) async {
+    final r = await http
+        .post(Uri.parse('$baseUrl/api/predict'),
+            headers: _headers(),
+            body: jsonEncode({
+              'vehicle_type': vehicleType,
+              'people_count': peopleCount,
+              'speed': speed,
+              'impact_g': impactG,
+              'hour': DateTime.now().hour,
+              if (accidentId != null) 'accident_id': accidentId,
+            }))
         .timeout(const Duration(seconds: 20));
     if (r.statusCode != 200 && r.statusCode != 201) {
       throw Exception(_err(r));

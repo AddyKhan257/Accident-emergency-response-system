@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../api.dart';
 import '../theme.dart';
 import 'login.dart';
+import 'report.dart';
 import 'sos.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -14,19 +15,27 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tiles = <(IconData, String)>[
-      (Icons.car_crash, 'Report Accident'),
-      (Icons.my_location, 'My Location'),
-      (Icons.contacts, 'Emergency Contacts'),
-      (Icons.history, 'Recent Status'),
+    final tiles = <(IconData, String, VoidCallback)>[
+      (
+        Icons.car_crash,
+        'Report Accident',
+        () => Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => const ReportScreen()))
+      ),
+      (Icons.my_location, 'My Location', () => _soon(context, 'My Location')),
+      (
+        Icons.contacts,
+        'Emergency Contacts',
+        () => _soon(context, 'Emergency Contacts')
+      ),
+      (Icons.history, 'Recent Status', () => _soon(context, 'Recent Status')),
     ];
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.navy,
         foregroundColor: Colors.white,
-        title: Text(Api.userName.isEmpty
-            ? 'AERS'
-            : 'Welcome, ${Api.userName}'),
+        title: Text(
+            Api.userName.isEmpty ? 'AERS' : 'Welcome, ${Api.userName}'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -80,7 +89,7 @@ class HomeScreen extends StatelessWidget {
                 for (final t in tiles)
                   Card(
                     child: InkWell(
-                      onTap: () => _soon(context, t.$2),
+                      onTap: t.$3,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
