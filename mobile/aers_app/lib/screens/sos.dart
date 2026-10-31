@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../api.dart';
 import '../theme.dart';
+import 'track.dart';
 
 class SosScreen extends StatefulWidget {
   const SosScreen({super.key});
@@ -26,18 +27,6 @@ class _SosScreenState extends State<SosScreen> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
-  }
-
-  String _familyText(dynamic family) {
-    if (family is! List || family.isEmpty) return '0 contact(s)';
-    final names = family.map((x) {
-      if (x is Map) {
-        final rel = x['relation'];
-        return rel == null ? '${x['name']}' : '${x['name']} ($rel)';
-      }
-      return x.toString();
-    }).join(', ');
-    return '${family.length} contact(s): $names';
   }
 
   @override
@@ -94,6 +83,7 @@ class _SosScreenState extends State<SosScreen> {
 
   Widget _done() {
     final r = _result!;
+    final id = int.tryParse('${r['accident_id']}');
     return Column(
       children: [
         const Icon(Icons.check_circle, size: 80, color: Colors.green),
@@ -114,7 +104,7 @@ class _SosScreenState extends State<SosScreen> {
             ListTile(
                 leading: const Icon(Icons.family_restroom),
                 title: const Text('Family notified'),
-                subtitle: Text(_familyText(r['family_notified']))),
+                subtitle: Text(Api.familyText(r['family_notified']))),
             ListTile(
                 leading: const Icon(Icons.info_outline),
                 title: const Text('Status'),
@@ -123,6 +113,19 @@ class _SosScreenState extends State<SosScreen> {
           ]),
         ),
         const Spacer(),
+        if (id != null)
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(backgroundColor: AppColors.navy),
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => TrackScreen(accidentId: id))),
+              icon: const Icon(Icons.airport_shuttle),
+              label: const Text('Ambulance & Tracking'),
+            ),
+          ),
+        const SizedBox(height: 10),
         SizedBox(
           width: double.infinity,
           child: OutlinedButton(

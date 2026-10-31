@@ -1,34 +1,28 @@
 import 'package:flutter/material.dart';
 import '../api.dart';
 import '../theme.dart';
+import 'contacts.dart';
+import 'donors.dart';
+import 'history.dart';
+import 'hospitals.dart';
+import 'livemap.dart';
 import 'login.dart';
+import 'profile.dart';
 import 'report.dart';
 import 'sos.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  void _soon(BuildContext c, String what) {
-    ScaffoldMessenger.of(c)
-        .showSnackBar(SnackBar(content: Text('$what - coming soon')));
-  }
-
   @override
   Widget build(BuildContext context) {
-    final tiles = <(IconData, String, VoidCallback)>[
-      (
-        Icons.car_crash,
-        'Report Accident',
-        () => Navigator.of(context)
-            .push(MaterialPageRoute(builder: (_) => const ReportScreen()))
-      ),
-      (Icons.my_location, 'My Location', () => _soon(context, 'My Location')),
-      (
-        Icons.contacts,
-        'Emergency Contacts',
-        () => _soon(context, 'Emergency Contacts')
-      ),
-      (Icons.history, 'Recent Status', () => _soon(context, 'Recent Status')),
+    final tiles = <(IconData, String, Widget)>[
+      (Icons.car_crash, 'Report Accident', const ReportScreen()),
+      (Icons.my_location, 'Live Location', const LiveMapScreen()),
+      (Icons.contacts, 'Emergency Contacts', const ContactsScreen()),
+      (Icons.history, 'Accident History', const HistoryScreen()),
+      (Icons.local_hospital, 'Hospitals & Police', const HospitalsScreen()),
+      (Icons.bloodtype, 'Blood Donors', const DonorsScreen()),
     ];
     return Scaffold(
       appBar: AppBar(
@@ -37,6 +31,11 @@ class HomeScreen extends StatelessWidget {
         title: Text(
             Api.userName.isEmpty ? 'AERS' : 'Welcome, ${Api.userName}'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.account_circle),
+            onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ProfileScreen())),
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
@@ -50,16 +49,16 @@ class HomeScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
           const Text('In an emergency, press SOS',
               style: TextStyle(fontSize: 16, color: Colors.black54)),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           GestureDetector(
             onTap: () => Navigator.of(context)
                 .push(MaterialPageRoute(builder: (_) => const SosScreen())),
             child: Container(
-              width: 190,
-              height: 190,
+              width: 170,
+              height: 170,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: AppColors.red,
@@ -74,14 +73,15 @@ class HomeScreen extends StatelessWidget {
               child: const Text('SOS',
                   style: TextStyle(
                       color: Colors.white,
-                      fontSize: 48,
+                      fontSize: 46,
                       fontWeight: FontWeight.bold)),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
           Expanded(
             child: GridView.count(
               crossAxisCount: 2,
+              childAspectRatio: 1.35,
               padding: const EdgeInsets.all(16),
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
@@ -89,11 +89,12 @@ class HomeScreen extends StatelessWidget {
                 for (final t in tiles)
                   Card(
                     child: InkWell(
-                      onTap: t.$3,
+                      onTap: () => Navigator.of(context)
+                          .push(MaterialPageRoute(builder: (_) => t.$3)),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(t.$1, size: 36, color: AppColors.navy),
+                          Icon(t.$1, size: 32, color: AppColors.navy),
                           const SizedBox(height: 8),
                           Text(t.$2, textAlign: TextAlign.center),
                         ],

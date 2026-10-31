@@ -225,5 +225,8 @@ def health():
 import predict_api
 predict_api.register(app, execute)
 
+import extra_api
+extra_api.register(app)
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
