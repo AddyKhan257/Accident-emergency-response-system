@@ -23,7 +23,7 @@ class SeverityScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final severity = (prediction['severity'] ?? 'Unknown').toString();
     final conf = double.tryParse(prediction['confidence'].toString());
-    final family = accident['family'];
+    final family = accident['family_notified'];
     final famCount = family is List ? family.length : 0;
     final c = _color(severity);
 

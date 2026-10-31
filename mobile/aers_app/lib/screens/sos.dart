@@ -91,7 +91,7 @@ class _SosScreenState extends State<SosScreen> {
 
   Widget _done() {
     final r = _result!;
-    final family = r['family'];
+    final family = r['family_notified'];
     final famCount = family is List ? family.length : 0;
     return Column(
       children: [
