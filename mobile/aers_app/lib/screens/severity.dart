@@ -1,12 +1,58 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import '../api.dart';
 import '../theme.dart';
 
-class SeverityScreen extends StatelessWidget {
+class SeverityScreen extends StatefulWidget {
   final Map<String, dynamic> accident;
   final Map<String, dynamic> prediction;
   const SeverityScreen(
       {super.key, required this.accident, required this.prediction});
+
+  @override
+  State<SeverityScreen> createState() => _SeverityScreenState();
+}
+
+class _SeverityScreenState extends State<SeverityScreen> {
+  List<dynamic>? _contacts;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadContacts();
+  }
+
+  Future<void> _loadContacts() async {
+    try {
+      final r = await http.get(
+        Uri.parse('${Api.baseUrl}/api/contacts'),
+        headers: {'Authorization': 'Bearer ${Api.token}'},
+      ).timeout(const Duration(seconds: 10));
+      if (!mounted) return;
+      if (r.statusCode == 200) {
+        final d = jsonDecode(r.body);
+        setState(() => _contacts = d is List ? d : []);
+      } else {
+        setState(() => _contacts = []);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _contacts = []);
+    }
+  }
+
+  String _contactsText() {
+    final c = _contacts;
+    if (c == null) return 'Loading...';
+    if (c.isEmpty) return 'No contacts added yet';
+    return c.map((x) {
+      if (x is Map) {
+        final rel = x['relation'];
+        return rel == null ? '${x['name']}' : '${x['name']} ($rel)';
+      }
+      return x.toString();
+    }).join(', ');
+  }
 
   Color _color(String s) {
     switch (s.toLowerCase()) {
@@ -21,10 +67,10 @@ class SeverityScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accident = widget.accident;
+    final prediction = widget.prediction;
     final severity = (prediction['severity'] ?? 'Unknown').toString();
     final conf = double.tryParse(prediction['confidence'].toString());
-    final family = accident['family_notified'];
-    final famCount = family is List ? family.length : 0;
     final c = _color(severity);
 
     return Scaffold(
@@ -77,8 +123,8 @@ class SeverityScreen extends StatelessWidget {
                     subtitle: Text(Api.place(accident['police']))),
                 ListTile(
                     leading: const Icon(Icons.family_restroom),
-                    title: const Text('Family notified'),
-                    subtitle: Text('$famCount contact(s)')),
+                    title: const Text('Family contacts'),
+                    subtitle: Text(_contactsText())),
                 ListTile(
                     leading: const Icon(Icons.info_outline),
                     title: const Text('Status'),

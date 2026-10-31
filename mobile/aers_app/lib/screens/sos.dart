@@ -28,13 +28,16 @@ class _SosScreenState extends State<SosScreen> {
     }
   }
 
-  String _name(dynamic v) {
-    if (v is Map) {
-      final n = v['name'] ?? '-';
-      final d = double.tryParse(v['distance_km'].toString());
-      return d == null ? '$n' : '$n (${d.toStringAsFixed(1)} km)';
-    }
-    return v?.toString() ?? '-';
+  String _familyText(dynamic family) {
+    if (family is! List || family.isEmpty) return '0 contact(s)';
+    final names = family.map((x) {
+      if (x is Map) {
+        final rel = x['relation'];
+        return rel == null ? '${x['name']}' : '${x['name']} ($rel)';
+      }
+      return x.toString();
+    }).join(', ');
+    return '${family.length} contact(s): $names';
   }
 
   @override
@@ -91,8 +94,6 @@ class _SosScreenState extends State<SosScreen> {
 
   Widget _done() {
     final r = _result!;
-    final family = r['family_notified'];
-    final famCount = family is List ? family.length : 0;
     return Column(
       children: [
         const Icon(Icons.check_circle, size: 80, color: Colors.green),
@@ -105,15 +106,15 @@ class _SosScreenState extends State<SosScreen> {
             ListTile(
                 leading: const Icon(Icons.local_hospital),
                 title: const Text('Nearest hospital'),
-                subtitle: Text(_name(r['hospital']))),
+                subtitle: Text(Api.place(r['hospital']))),
             ListTile(
                 leading: const Icon(Icons.local_police),
                 title: const Text('Nearest police'),
-                subtitle: Text(_name(r['police']))),
+                subtitle: Text(Api.place(r['police']))),
             ListTile(
                 leading: const Icon(Icons.family_restroom),
                 title: const Text('Family notified'),
-                subtitle: Text('$famCount contact(s)')),
+                subtitle: Text(_familyText(r['family_notified']))),
             ListTile(
                 leading: const Icon(Icons.info_outline),
                 title: const Text('Status'),
