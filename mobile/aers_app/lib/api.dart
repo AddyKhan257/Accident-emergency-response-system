@@ -8,7 +8,8 @@ import 'package:url_launcher/url_launcher.dart';
 class Api {
   // adb reverse tcp:5000 tcp:5000 makes this work on a USB phone.
   // Emulator: http://10.0.2.2:5000 | Phone on Wi-Fi: http://LAPTOP-IP:5000
-  static String baseUrl = 'http://localhost:5000';
+    static String baseUrl =
+      const String.fromEnvironment('API_URL', defaultValue: 'http://localhost:5000');
 
   // true = always send Pune coordinates (matches seeded hospitals)
   static bool demoLocation = true;
