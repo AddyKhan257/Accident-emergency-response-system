@@ -218,6 +218,24 @@ def notify_family(aid):
     return _out({"accident_id": aid, "family_notified": contacts})
 
 
+@bp.post("/api/accidents/<int:aid>/mark-auto")
+@jwt_required()
+def mark_auto(aid):
+    """Marks an accident as raised by automatic crash detection
+    (source='auto') and stores the measured impact in the description."""
+    u, acc, bad = _accident_for(aid)
+    if bad:
+        return bad
+    d = request.get_json(silent=True) or {}
+    try:
+        g = round(float(d.get("impact_g")), 1)
+    except (TypeError, ValueError):
+        g = None
+    note = "Auto-detected crash" + (f" (impact {g} g)" if g is not None else "")
+    _run("UPDATE accidents SET source='auto', description=%s WHERE id=%s", (note, aid))
+    return _out({"accident_id": aid, "source": "auto", "description": note})
+
+
 # ------------------------------------------------- hospitals / police / donors
 def _with_distance(rows):
     lat = request.args.get("lat", type=float)

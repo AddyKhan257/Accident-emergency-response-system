@@ -4,7 +4,9 @@ import '../theme.dart';
 import 'track.dart';
 
 class SosScreen extends StatefulWidget {
-  const SosScreen({super.key});
+  /// true = send immediately (used by Voice SOS after its countdown)
+  final bool autoSend;
+  const SosScreen({super.key, this.autoSend = false});
   @override
   State<SosScreen> createState() => _SosScreenState();
 }
@@ -13,6 +15,14 @@ class _SosScreenState extends State<SosScreen> {
   bool _busy = false;
   String? _error;
   Map<String, dynamic>? _result;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.autoSend) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _send());
+    }
+  }
 
   Future<void> _send() async {
     setState(() {

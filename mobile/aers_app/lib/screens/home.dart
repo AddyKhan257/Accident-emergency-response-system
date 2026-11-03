@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../api.dart';
 import '../theme.dart';
 import 'contacts.dart';
+import 'crash.dart';
 import 'donors.dart';
 import 'history.dart';
 import 'hospitals.dart';
@@ -10,9 +11,40 @@ import 'login.dart';
 import 'profile.dart';
 import 'report.dart';
 import 'sos.dart';
+import 'voice.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool _crashOpen = false;
+
+  @override
+  void initState() {
+    super.initState();
+    CrashDetector.instance.onCrash = _onCrash;
+    CrashDetector.savedEnabled().then((on) {
+      if (on) CrashDetector.instance.start();
+    });
+  }
+
+  @override
+  void dispose() {
+    CrashDetector.instance.onCrash = null;
+    CrashDetector.instance.stop();
+    super.dispose();
+  }
+
+  Future<void> _onCrash(double g) async {
+    if (_crashOpen || !mounted) return;
+    _crashOpen = true;
+    await Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => CrashCountdownScreen(impactG: g)));
+    _crashOpen = false;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,6 +55,8 @@ class HomeScreen extends StatelessWidget {
       (Icons.history, 'Accident History', const HistoryScreen()),
       (Icons.local_hospital, 'Hospitals & Police', const HospitalsScreen()),
       (Icons.bloodtype, 'Blood Donors', const DonorsScreen()),
+      (Icons.mic, 'Voice SOS', const VoiceScreen()),
+      (Icons.sensors, 'Crash Detection', const CrashScreen()),
     ];
     return Scaffold(
       appBar: AppBar(
