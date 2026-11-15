@@ -15,7 +15,7 @@
 
 <br>
 
-[What it does](#what-it-does) · [How it works](#how-it-works) · [Run it](#running-the-project) · [Precautions](#things-that-will-bite-you) · [Troubleshooting](#troubleshooting) · [Honest limitations](#what-is-real-and-what-is-simulated)
+[What it does](#what-it-does) · [Quick start](#quick-start-download-and-run) · [Build from source](#build-from-source-optional) · [Precautions](#things-that-will-bite-you) · [Troubleshooting](#troubleshooting) · [Honest limitations](#what-is-real-and-what-is-simulated)
 
 </div>
 
@@ -173,42 +173,41 @@ The extra screens (donors, ambulances, admin stats and so on) are served from `e
 
 ---
 
-## Running the project
+## Quick start: download and run
 
-You need to do three things: start the backend, open the admin app, and get the Android app onto a phone. The phone can talk to the backend over a **USB cable** or over **Wi-Fi**. Both are covered below.
+This is the path for someone who just wants to run the project. **Nothing gets built on your laptop.** No Flutter, no Android Studio, no Android SDK. GitHub builds the Android app for you and you download the finished APK from this repo. Your laptop only runs the backend in Docker and, if you want it, the admin app. That is a few GB of disk in total, compared to well over 10 GB if you set up Flutter and the Android tooling.
+
+One thing to understand before you start: **the app has the backend address baked inside it** when it is built. So the APK has to match how your phone will reach your laptop:
+
+| Phone talks to the laptop over | Address inside the APK | Where you get the APK |
+|-------------------------------|------------------------|-----------------------|
+| USB cable (`adb reverse`) | `http://localhost:5000` | Ready-made, from this repo's **Releases** |
+| Wi-Fi, no cable | `http://<your laptop IP>:5000` | Built on GitHub with your IP (one click, nothing on your laptop), then downloaded from **Releases**, see 5B |
 
 ### 1. What to install
 
-| Tool | Needed for | Notes |
-|------|-----------|-------|
-| [Git](https://git-scm.com/downloads) | cloning the repo | |
-| [Docker Desktop](https://www.docker.com/products/docker-desktop/) | backend + database | Turn on the WSL 2 backend when it asks. Docker Engine inside WSL2 Ubuntu works too |
-| [Python 3.12](https://www.python.org/downloads/) | admin app | Tick "Add python.exe to PATH". Very new versions (3.14 and up) may not have PySide6 wheels |
-| [Flutter SDK](https://docs.flutter.dev/install/windows) | building the mobile app | Add `flutter\bin` to PATH, then run `flutter doctor` |
-| [Android Studio](https://developer.android.com/studio) | Android SDK, platform tools, NDK | See the list below |
-| A phone with USB debugging | testing | Android 8 or newer |
+| Tool | Needed for | |
+|------|-----------|---|
+| [Docker Desktop](https://www.docker.com/products/docker-desktop/) | backend + database | Turn on the WSL 2 backend when it asks |
+| [Python 3.12](https://www.python.org/downloads/) | admin app only | Tick "Add python.exe to PATH". Very new versions (3.14 and up) may not have PySide6 wheels |
+| [Git](https://git-scm.com/downloads) | cloning the repo | Optional, you can download a ZIP instead |
+| [SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools) | USB option only | A 10 MB zip with `adb`, unzip it anywhere. Not the whole Android SDK |
+| An Android phone | the app | Android 8 or newer |
 
-In Android Studio, open **SDK Manager** and install: an Android SDK Platform, **Command-line Tools**, **Platform-Tools** (this gives you `adb`), and under SDK Tools tick *Show Package Details* and install **NDK (Side by side) 28.2.13676358**. Then accept the licences:
-
-```powershell
-flutter doctor --android-licenses
-flutter doctor
-```
-
-Flutter itself does not need Android Studio to be open, only the SDK it installed.
-
-**Disk space:** keep at least **10 GB free on C:**. Flutter, the Android SDK and NDK, Gradle caches and Docker images add up, and a full disk makes builds fail with strange errors (`errno = 112`, read-only filesystem).
-
-If you do not want any of the Flutter and Android tooling on your laptop, skip to [Option C](#option-c-build-the-apk-on-github-actions) and let GitHub build the APK.
+Keep around **5 GB free on C:**. Docker images and the admin app's Python packages are the heavy parts. A full disk makes things fail in confusing ways (`errno = 112`, read-only filesystem).
 
 ### 2. Get the code
+
+With Git:
 
 ```powershell
 git clone https://github.com/AddyKhan257/Accident-emergency-response-system.git
 cd Accident-emergency-response-system
 ```
 
-Keep the folder out of OneDrive and avoid very long paths. OneDrive sync breaks virtual environments and build folders.
+Without Git: open the repo page, click the green **Code** button, **Download ZIP**, extract it, and open a terminal inside the extracted folder (the one that has `docker-compose.yml`).
+
+Keep the folder out of OneDrive and avoid very long paths.
 
 ### 3. Start the backend
 
@@ -268,6 +267,8 @@ docker compose up -d                    # start again
 
 ### 4. Run the admin app
 
+From the project folder:
+
 ```powershell
 cd admin
 py -3.12 -m venv .venv
@@ -282,39 +283,35 @@ If PowerShell says running scripts is disabled, run this once and try the activa
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```
 
-Log in with the admin account and open **Accident Management**. Keep it open while you test the phone.
+Log in with the admin account and open **Accident Management**. Keep it open while you test the phone. Next time you can start it with `run_admin.bat`.
 
-After the first setup you can start it with `run_admin.bat`. `build_exe.bat` packages it into a single `.exe` with PyInstaller (this has to be done on Windows).
+### 5. Put the app on the phone
 
-### 5. Get the app on the phone
+Pick **5A (USB)** or **5B (Wi-Fi)**.
 
-First enable developer options on the phone: tap the build number seven times in *About phone*, then switch on **USB debugging**. On Xiaomi and Redmi phones also switch on **Install via USB** and **USB debugging (Security settings)**, otherwise the install is silently blocked.
+#### 5A. USB cable, ready-made APK
 
-Plug the phone in, tap *Allow* on the debugging prompt and check:
+The simplest one, no accounts and no IP addresses. The cable carries the traffic, `adb reverse` makes `localhost:5000` on the phone point to port 5000 on the laptop.
 
-```powershell
-adb devices
-flutter devices
-```
-
-The phone should show as `device`. Note the device id, you will need it.
-
-#### Option A: USB cable (most reliable, best for demo day)
-
-The cable carries the traffic. `adb reverse` makes `localhost:5000` on the phone point to port 5000 on the laptop, so no IP address is involved.
+1. On the phone: tap the build number seven times in *About phone*, then switch on **USB debugging**. On Xiaomi and Redmi phones also switch on **Install via USB** and **USB debugging (Security settings)**.
+2. Open this repo's **Releases** page **on the phone** and download `aers-app.apk` from the build whose description says `API_URL = http://localhost:5000`. Open the file and install it (allow *Install unknown apps* for the browser when asked).
+3. Plug the phone into the laptop and tap *Allow* on the debugging prompt.
+4. In a terminal inside the unzipped platform-tools folder:
 
 ```powershell
-cd mobile\aers_app
-flutter pub get
-adb reverse tcp:5000 tcp:5000
-flutter run --release -d <device-id>
+.\adb devices
+.\adb reverse tcp:5000 tcp:5000
 ```
 
-Do not pass `API_URL` here, the app defaults to `http://localhost:5000`. Run `adb reverse` again every time you replug the cable. If you unplug, the app stops reaching the backend.
+`adb devices` must show the phone as `device`. Now open the app and log in.
 
-#### Option B: Wi-Fi, no cable while using the app
+Keep the cable plugged in while using the app. If you replug it, run the `adb reverse` line again.
 
-The phone and the laptop must be on the **same Wi-Fi**. The cable is needed only once, to install.
+> No such build in Releases? Fork the repo (see 5B step 4) and run the **Build APK** workflow with `http://localhost:5000` as the `api_url`.
+
+#### 5B. Wi-Fi, no cable
+
+The phone and the laptop must be on the **same Wi-Fi**. No cable is needed at any point.
 
 **1. Find the laptop's Wi-Fi IP**
 
@@ -355,31 +352,22 @@ The *IP Helper* service must be running or the proxy does nothing. And the Wi-Fi
 http://192.168.1.6:5000/api/health
 ```
 
-If you see `{"status":"ok"}` the network side is done. If not, fix this first, building the app will not help.
+If you see `{"status":"ok"}` the network side is done. If not, fix this first, a new APK will not help.
 
-**4. Build with the laptop's IP baked in** and install over the cable:
+**4. Get an APK that has your IP in it (nothing is built on your laptop)**
 
-```powershell
-cd mobile\aers_app
-flutter pub get
-flutter run --release -d <device-id> --dart-define=API_URL=http://192.168.1.6:5000
-```
+Every build on the **Releases** page says in its description which address it was made for (`API_URL = ...`). If one of them already matches your laptop's IP, skip straight to step 5. If not, pick one of these:
 
-When it opens on the phone, unplug the cable and log in. It works over Wi-Fi now.
+- **Ask the repo owner (this is how I did it for my friend).** Send them your laptop's address. They open **Actions**, choose **Build APK**, click **Run workflow** and put your address in `api_url`, for example `http://192.168.1.6:5000`. After 6 to 10 minutes the APK shows up on this repo's **Releases** page and you download it from there.
+- **Do it yourself with a fork.**
+  1. Log in to GitHub and **Fork** this repo (button at the top right).
+  2. In your fork open the **Actions** tab. If GitHub shows a button saying workflows are disabled on forks, click *I understand my workflows, go ahead and enable them*.
+  3. Choose **Build APK**, click **Run workflow**, put your address in `api_url` and run it.
+  4. When it turns green, open **Releases** in your fork.
 
-The IP is part of the APK. **If the laptop's IP changes, the app has to be rebuilt** with the new one, and the portproxy rule has to be added again.
+**5. Install on the phone.** Open the **Releases** page (of this repo, or of your fork) **on the phone**, download `aers-app.apk` and install it (allow *Install unknown apps* for the browser). Log in, it works over Wi-Fi.
 
-#### Option C: Build the APK on GitHub Actions
-
-For when you do not want Flutter and the Android SDK on the machine at all.
-
-1. Push the repo to GitHub (the workflow file is already in `.github/workflows/build-apk.yml`).
-2. Open the **Actions** tab, choose **Build APK**, click **Run workflow**.
-3. Put the backend URL in `api_url`, for example `http://192.168.1.6:5000`, and run it.
-4. After about 6 to 10 minutes, open **Releases** and download `aers-app.apk` **on the phone**.
-5. Allow *Install unknown apps* for the browser and install.
-
-You still need the portproxy and firewall steps from Option B for the phone to reach the laptop.
+The IP is part of the APK. **If the laptop's IP changes, run the workflow again with the new IP** and install the new APK. The portproxy rule also has to be added again for the new IP.
 
 ### 6. Try it
 
@@ -390,11 +378,62 @@ You still need the portproxy and firewall steps from Option B for the phone to r
 
 ---
 
+## Build from source (optional)
+
+Only needed if you want to change the app code or build it yourself. This installs a lot (Flutter, Android Studio, SDK, NDK, Gradle caches), so keep **10 GB or more free on C:**. The backend and admin steps (2 to 4 above) are the same.
+
+### What to install
+
+| Tool | Notes |
+|------|-------|
+| [Flutter SDK](https://docs.flutter.dev/install/windows) | Add `flutter\bin` to PATH, then run `flutter doctor` |
+| [Android Studio](https://developer.android.com/studio) | For the Android SDK, platform tools and NDK |
+
+In Android Studio, open **SDK Manager** and install: an Android SDK Platform, **Command-line Tools**, **Platform-Tools** (this gives you `adb`), and under SDK Tools tick *Show Package Details* and install **NDK (Side by side) 28.2.13676358**. Then accept the licences:
+
+```powershell
+flutter doctor --android-licenses
+flutter doctor
+```
+
+Plug the phone in (USB debugging on) and note the device id:
+
+```powershell
+adb devices
+flutter devices
+```
+
+### With a USB cable
+
+```powershell
+cd mobile\aers_app
+flutter pub get
+adb reverse tcp:5000 tcp:5000
+flutter run --release -d <device-id>
+```
+
+Do not pass `API_URL`, the app defaults to `http://localhost:5000`. Run `adb reverse` again every time you replug the cable.
+
+### Over Wi-Fi
+
+Do steps 1 to 3 of [5B](#5b-wi-fi-no-cable) (IP, firewall and portproxy, browser test). Then build with your IP and install over the cable once:
+
+```powershell
+cd mobile\aers_app
+flutter pub get
+flutter run --release -d <device-id> --dart-define=API_URL=http://192.168.1.6:5000
+```
+
+When it opens on the phone, unplug the cable. It works over Wi-Fi now.
+
+---
+
 ## Things that will bite you
 
 Learned the hard way while setting this up on more than one machine.
 
 - **Docker has to be running.** After a reboot, open Docker Desktop first. (With Docker inside WSL it is `sudo service docker start`.) A phone error saying *connection reset* usually means the proxy is fine but the backend is not running.
+- **The address is inside the APK.** A new laptop IP means a new APK (or use the cable and `localhost`).
 - **The IP can change** after a restart or when the router hands out a new lease. Check `ipconfig` before a demo. Setting a static IP or a DHCP reservation for the laptop in the router settings avoids the problem.
 - **The portproxy rule survives reboots, but it is tied to one IP.** A new IP means a new rule.
 - **College or public Wi-Fi often blocks device to device traffic** (client isolation). If the browser test fails everywhere, use your phone's hotspot for the laptop, or use the USB option.
@@ -403,7 +442,7 @@ Learned the hard way while setting this up on more than one machine.
 - **Do not commit `.env`.** It is in `.gitignore`. The values in the examples are for local development only, change every secret before putting this on a real server.
 - **The app uses plain `http`.** That is fine on a local network and is allowed through the cleartext setting in the Android manifest. Use HTTPS before any real deployment.
 - **Laptop sleep kills the backend.** Turn off sleep while testing, and keep it plugged in.
-- **Keep disk space free.** Docker, Gradle and the NDK are heavy.
+- **Keep disk space free.** Docker images, and Gradle and the NDK if you build from source, are heavy.
 - **Keep a cable in the bag on demo day.** It is the one option that does not depend on Wi-Fi.
 
 ## Troubleshooting
@@ -413,26 +452,27 @@ Learned the hard way while setting this up on more than one machine.
 | Phone browser: connection timed out | Wrong IP (often the WSL one), firewall, or Wi-Fi client isolation | Use the Wi-Fi IPv4 from `ipconfig`, check the firewall rule and the Private network profile, try the hotspot |
 | Phone browser: `ERR_CONNECTION_RESET` | Backend is not running behind the proxy | Start Docker Desktop, `docker compose up -d`, check `localhost:5000/api/health` on the laptop first |
 | `failed to connect to the docker API ... dockerDesktopLinuxEngine` | Docker Desktop is not running | Open it and wait for the engine to start |
-| `flutter` is not recognized | Flutter is not on PATH | Add `flutter\bin` to PATH and restart the terminal |
-| `flutter run` asks for a device or crashes with several devices | More than one target | Pass `-d <device-id>` from `flutter devices` |
-| Gradle: *Android Gradle Plugin version 9.1.0 is lower than Flutter's minimum 9.1.1* | Newer Flutter needs a newer AGP | In `mobile/aers_app/android/settings.gradle.kts` change the `com.android.application` version to `9.1.1` |
-| Gradle: *sdkmanager did not install NDK* | NDK missing | Install NDK `28.2.13676358` from Android Studio's SDK Manager |
-| `There is not enough space on the disk` (errno 112) | C: is full | Free 10 GB or more, then build again |
-| App installs but says the device is not found / `adb: device not found` | Cable or debugging prompt | `adb kill-server`, `adb devices`, allow debugging again, try another cable |
+| Login works in the browser but the app says it can not connect | The APK has a different address than the one you are using | USB: run `adb reverse tcp:5000 tcp:5000`. Wi-Fi: build a new APK with the current IP |
+| App installs but `adb: device not found` | Cable or debugging prompt | `adb kill-server`, `adb devices`, allow debugging again, try another cable |
 | Install blocked on Xiaomi / Redmi | MIUI security | Enable *Install via USB* and *USB debugging (Security settings)* |
 | `activate` blocked in PowerShell | Execution policy | `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` |
 | `No suitable Python runtime found` for 3.12 | Python 3.12 not installed | Install it from python.org and open a new terminal |
-| Login works in the browser but the app says it can not connect | App was built with an old IP, or no `adb reverse` | Rebuild with the current IP, or run `adb reverse tcp:5000 tcp:5000` |
+| `There is not enough space on the disk` (errno 112) | C: is full | Free some space and try again |
+| `flutter` is not recognized (build from source) | Flutter is not on PATH | Add `flutter\bin` to PATH and restart the terminal |
+| `flutter run` asks for a device or crashes with several devices | More than one target | Pass `-d <device-id>` from `flutter devices` |
+| Gradle: *Android Gradle Plugin version 9.1.0 is lower than Flutter's minimum 9.1.1* | Newer Flutter needs a newer AGP | In `mobile/aers_app/android/settings.gradle.kts` change the `com.android.application` version to `9.1.1` |
+| Gradle: *sdkmanager did not install NDK* | NDK missing | Install NDK `28.2.13676358` from Android Studio's SDK Manager |
 
 ## Before a demo
 
 - [ ] Laptop plugged in, sleep off
 - [ ] Docker Desktop running, `docker compose ps` shows both containers up
 - [ ] `http://localhost:5000/api/health` is OK on the laptop
-- [ ] Laptop IP unchanged (`ipconfig`), `http://<ip>:5000/api/health` is OK on the phone
+- [ ] Wi-Fi: laptop IP unchanged (`ipconfig`) and `http://<ip>:5000/api/health` is OK on the phone
+- [ ] USB: cable connected and `adb reverse tcp:5000 tcp:5000` done
 - [ ] Admin app open on **Accident Management**
 - [ ] Ambulance Management: use *Reset all to available* so there are free ambulances
-- [ ] USB cable and the backup plan (hotspot or cable) ready
+- [ ] Backup plan ready (cable or hotspot)
 - [ ] Say clearly which parts are simulated
 
 ## Where this can go next
@@ -440,6 +480,7 @@ Learned the hard way while setting this up on more than one machine.
 - Real push notifications with Firebase Cloud Messaging (the token column and endpoint already exist)
 - A real accident dataset for the model
 - Real hospital, police and ambulance integrations
+- Letting the user type the server address inside the app, so one APK works everywhere
 - CI for the backend (tests, Docker image build and push) and deployment on a cloud VM with HTTPS
 
 ## Author
